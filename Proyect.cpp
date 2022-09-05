@@ -9,13 +9,16 @@ using namespace std;
 //Valor aleatorio con distribuion uniforme (0,1)
 double p; 
 
+//Declaramos la variable de nombre
+string namef;
+
 //Tiempo maximo de la simulacion (1 Hora)
 double time_max = 3600;
 
 //Parametros para la distribucion Extreme Values (Valido para las regiones North, South y West)
-double mu = 2.76958;//Location parameter
-double k = 0.476206;//Shape parameter
-double sigma = 2.1753;// Scale Parameter
+double mu = 2.77;//Location parameter
+double k = 0.47;//Shape parameter
+double sigma = 2.17;// Scale Parameter
 
 //Parametros para la distribuicon Birnabum Sanders(Valido para la region East)
 double beta = 0; //Scale parameter
@@ -30,7 +33,10 @@ double ICDF_ExtremeValues(double p,double mu,double k,double sigma)
         return mu-sigma*log(-log(p));
     }
     else{
-        return ((pow(-1*log(p),-k)-1)*(sigma/k))+mu;
+        double a = pow(-1*log(p),-1*k);
+        double b = -1*k*mu*pow(-log(p),k);
+        double c = sigma * pow(-log(p),k) - sigma;
+        return (-1)*(a*(b+c) )/k;
     }
 }
 
@@ -72,15 +78,20 @@ void queue_generaration(double time_max,
 
 int main(){
 
-  //Creamos el fichero para guardar los archivos 
-  ofstream Data ("ICDF_Distribution.dat");
+    for (int i = 0; i<10000; i++)
+    {
+        //Nombre del archivo
+        namef = "Results/North_Iteration_" + to_string(i) + ".dat";
 
-  //Prueba simulacion
-  queue_generaration(time_max,Data,ICDF_ExtremeValues, mu, k, sigma);
+        //Creamos el fichero para guardar los archivos 
+        ofstream Data (namef);
 
-  //Cerramos el archivo
-  Data.close();
+        //Prueba simulacion
+        queue_generaration(time_max,Data,ICDF_ExtremeValues, mu, k, sigma);
 
+        //Cerramos el archivo
+        Data.close();
+    }
   
 
 
