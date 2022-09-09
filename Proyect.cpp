@@ -8,7 +8,6 @@ using namespace std;
 //Numero de veces a efectuar la simulacion
 int maximum_repetitons = 50000;
 
-
 //Valor aleatorio con distribuion uniforme (0,1)
 double p; 
 
@@ -51,7 +50,8 @@ void queue_generaration(double time_max,
                             double (*distribution_taken)(double,double,double,double), 
                             double location_parameter, 
                             double shape_parameter, 
-                            double scale_parameter
+                            double scale_parameter,
+                            int iteration
                             )
 {
     //Definimos el generador de numeros aleatorios para una distribuicon uniforme
@@ -61,9 +61,6 @@ void queue_generaration(double time_max,
     //Seteamos los parametros iniciales
     double t = 0; //contador de tiempo
     int N = 1; //contador de numero de vehiculos en la cola
-
-    //Creamos el encabezado del archivo de salida
-    data<<"Delta_t"<<" "<<"Tiempo_acumulado"<<" "<<"#Autos"<<endl;
 
     //Definimos la simulacion
     while(t < time_max)
@@ -77,27 +74,32 @@ void queue_generaration(double time_max,
         N++;
 
         //Guardamos los datos
-        data<<delta_t<<" "<<t<<" "<<N<<endl;
+        data<<delta_t<<" "<<t<<" "<<N<<" "<<iteration<<endl;
     }
 }
 
 void queue_trend_analysis(int maximum_repetitons)
 {
+    //Nombre del archivo
+    namef = "Results/North_Complete.dat";
+    
+    //Creamos el fichero para guardar los archivos 
+    ofstream Data (namef);
+    
+    //Creamos el encabezado del archivo de salida
+    Data<<"Delta_t"<<" "<<"Tiempo_acumulado"<<" "<<"#Autos"<<" "<<"Iteration"<<endl;
+
     for(int i = 0; i < maximum_repetitons; i++)
     {
-        //Nombre del archivo
-        namef = "Results/North_Iteration_" + to_string(i) + ".dat";
-
-        //Creamos el fichero para guardar los archivos 
-        ofstream Data (namef);
 
         //Generamos la simulacion
-        queue_generaration(time_max,Data,ICDF_ExtremeValues, mu, k, sigma);
+        queue_generaration(time_max,Data,ICDF_ExtremeValues, mu, k, sigma, i);
 
-        //Cerramos el archivo
-        Data.close();
+
     }
 
+    //Cerramos el archivo
+    Data.close();
 }
 
 
