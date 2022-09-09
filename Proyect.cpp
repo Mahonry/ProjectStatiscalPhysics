@@ -5,6 +5,9 @@
 #include<cmath>
 using namespace std;
 
+//Numero de veces a efectuar la simulacion
+int maximum_repetitons = 50000;
+
 
 //Valor aleatorio con distribuion uniforme (0,1)
 double p; 
@@ -17,12 +20,12 @@ double time_max = 3600;
 
 //Parametros para la distribucion Extreme Values (Valido para las regiones North, South y West)
 double mu = 2.77;//Location parameter
-double k = 0.47;//Shape parameter
-double sigma = 2.17;// Scale Parameter
+double k = 0.476;//Shape parameter
+double sigma = 2.175;// Scale Parameter
 
 //Parametros para la distribuicon Birnabum Sanders(Valido para la region East)
-double beta = 0; //Scale parameter
-double gamma_ = 0; //Shape parameter
+double sigma_ = 0; //Scale parameter
+double mu_ = 0; //Shape parameter
 
 
 
@@ -63,10 +66,13 @@ void queue_generaration(double time_max,
     data<<"Delta_t"<<" "<<"Tiempo_acumulado"<<" "<<"#Autos"<<endl;
 
     //Definimos la simulacion
-    while(t <= time_max)
+    while(t < time_max)
     {
         double p = distribution(generator);
-        double delta_t = distribution_taken(p, location_parameter, shape_parameter, scale_parameter);
+        double delta_t = distribution_taken(p, 
+                                            location_parameter, 
+                                            shape_parameter, 
+                                            scale_parameter);
         t += delta_t;
         N++;
 
@@ -75,10 +81,9 @@ void queue_generaration(double time_max,
     }
 }
 
-
-int main(){
-
-    for (int i = 0; i<10000; i++)
+void queue_trend_analysis(int maximum_repetitons)
+{
+    for(int i = 0; i < maximum_repetitons; i++)
     {
         //Nombre del archivo
         namef = "Results/North_Iteration_" + to_string(i) + ".dat";
@@ -86,12 +91,22 @@ int main(){
         //Creamos el fichero para guardar los archivos 
         ofstream Data (namef);
 
-        //Prueba simulacion
+        //Generamos la simulacion
         queue_generaration(time_max,Data,ICDF_ExtremeValues, mu, k, sigma);
 
         //Cerramos el archivo
         Data.close();
     }
+
+}
+
+
+
+int main(){
+
+//Generamos los archivos para hacer el trend analysis
+    queue_trend_analysis(maximum_repetitons);
+
   
 
 
