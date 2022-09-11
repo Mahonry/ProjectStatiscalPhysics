@@ -1,3 +1,6 @@
 *.dat
 *.csv
 *.vscode
+*.out
+*.xlsx
+*.ods
