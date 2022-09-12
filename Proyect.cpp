@@ -16,9 +16,9 @@ string namef;
 double time_max = 3600;
 
 //Parametros NORTH para la distribucion Extreme Values 
-double mu_north = 2.7696;//Location parameter
-double k_north = 0.4762;//Shape parameter
-double sigma_north = 2.176;// Scale Parameter
+double mu_north = 2.76;//Location parameter
+double k_north = 0.47;//Shape parameter
+double sigma_north = 2.17;// Scale Parameter
 
 //Parametros EAST para la distribuicon Birnabum Sanders
 double sigma_east = 11.26; //Scale parameter
@@ -26,14 +26,14 @@ double mu_east = 0; //Location parameter
 double k_east = 1.1;//Shape parameter 
 
 //Parametros SOUTH para la distribucion Extreme Values
-double mu_south = 2.55731;//Location parameter
-double k_south = 0.412844;//Shape parameter
-double sigma_south = 1.99457;// Scale Parameter
+double mu_south = 2.55;//731;//Location parameter
+double k_south = 0.4128;//Shape parameter
+double sigma_south = 2;//1.99457;// Scale Parameter
 
 //Parametros WEST para la distribucion Extreme Values
 double mu_west = 3.9742;//Location parameter
-double k_west = 0.864264;//Shape parameter
-double sigma_west = 3.01907;// Scale Parameter
+double k_west = 0.8642;//Shape parameter
+double sigma_west = 3.019;// Scale Parameter
 
 
 
@@ -70,12 +70,13 @@ float queue_generation(double time_max,
                             double location_parameter, 
                             double shape_parameter, 
                             double scale_parameter,
-                            int iteration
+                            int iteration,
+                            double max_distribution
                             )
 {
     //Definimos el generador de numeros aleatorios para una distribuicon uniforme
     default_random_engine generator(time(NULL));
-    uniform_real_distribution<double> distribution(0.0,1.0);
+    uniform_real_distribution<double> distribution(0.0,max_distribution);
 
     //Seteamos los parametros iniciales
     double t = 0; //contador de tiempo
@@ -105,7 +106,8 @@ void queue_trend_analysis(int maximum_repetitions,
                         double mu,
                         double k,
                         double sigma,
-                        string region)
+                        string region,
+                        double max_distribution)
 {
     //Nombre del archivo
     namef = "Results/_" + region + "_Complete_trend_analysis.dat";
@@ -120,7 +122,7 @@ void queue_trend_analysis(int maximum_repetitions,
     {
 
         //Generamos la simulacion
-        queue_generation(time_max,Data,distribution_selected, mu, k, sigma, i);
+        queue_generation(time_max,Data,distribution_selected, mu, k, sigma, i,max_distribution);
 
 
     }
@@ -134,13 +136,14 @@ void queue_trend_analysis(int maximum_repetitions,
 
 
 //Formador de la cola 4 links 
-float queue_formation(  float Q_0,
-                        float V_first,
-                        float t_g, //En este caso tomaremos time green (t_g) and time red (t_r) iguales
-                        float t_r,
-                        float S_flow,
-                        float V_g, 
-                        float time_max
+float queue_formation(  double Q_0,
+                        double V_first,
+                        double t_g, //En este caso tomaremos time green (t_g) and time red (t_r) iguales
+                        double t_r,
+                        double S_flow,
+                        double V_g, 
+                        double time_max,
+                        double max_distribution
                         )
 {
     //Declaramos el valor final de la cola
@@ -174,11 +177,11 @@ float queue_formation(  float Q_0,
 
 
         //Calculamos el arrivo en rojo
-        V_first = queue_generation(t_r,Data,ICDF_ExtremeValues, mu_north, k_north, sigma_north, i);
+        V_first = queue_generation(t_r,Data,ICDF_ExtremeValues, mu_north, k_north, sigma_north, i,max_distribution);
         t += t_r;
         
         //Calculamos el arribo en verde
-        V_g = queue_generation(t_g,Data,ICDF_ExtremeValues, mu_north, k_north, sigma_north, i);
+        V_g = queue_generation(t_g,Data,ICDF_ExtremeValues, mu_north, k_north, sigma_north, i,max_distribution);
         t += t_g;
         
         //Calculamos la cola final
@@ -216,8 +219,8 @@ int main(){
     srand(time(NULL));
 
 //Generamos los archivos para hacer el trend analysis
-    string region = "West";
-    queue_trend_analysis(maximum_repetitions,ICDF_ExtremeValues,mu_west,k_west,sigma_west,region);
+    string region = "South";
+    queue_trend_analysis(maximum_repetitions,ICDF_ExtremeValues,mu_south,k_south,sigma_south,region,1); //.99 para WEST .99999 North
     //cout<<queue_formation(0,0,60,180,3600,0,time_max)<<endl;
 
   
