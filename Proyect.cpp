@@ -9,24 +9,32 @@ using namespace std;
 //Numero de veces a efectuar la simulacion
 int maximum_repetitions = 50000;
 
-//Valor aleatorio con distribuion uniforme (0,1)
-double p; 
-
 //Declaramos la variable de nombre
 string namef;
 
 //Tiempo maximo de la simulacion (1 Hora)
 double time_max = 3600;
 
-//Parametros para la distribucion Extreme Values (Valido para las regiones North, South y West)
-double mu_north = 2.76;//Location parameter
-double k_north = 0.47;//Shape parameter
-double sigma_north = 2.17;// Scale Parameter
+//Parametros NORTH para la distribucion Extreme Values 
+double mu_north = 2.7696;//Location parameter
+double k_north = 0.4762;//Shape parameter
+double sigma_north = 2.176;// Scale Parameter
 
-//Parametros para la distribuicon Birnabum Sanders(Valido para la region East)
-double sigma_east = 11.2647; //Scale parameter
+//Parametros EAST para la distribuicon Birnabum Sanders
+double sigma_east = 11.26; //Scale parameter
 double mu_east = 0; //Location parameter
-double k_east = 1.0928;//Shape parameter 
+double k_east = 1.1;//Shape parameter 
+
+//Parametros SOUTH para la distribucion Extreme Values
+double mu_south = 2.55731;//Location parameter
+double k_south = 0.412844;//Shape parameter
+double sigma_south = 1.99457;// Scale Parameter
+
+//Parametros WEST para la distribucion Extreme Values
+double mu_west = 3.9742;//Location parameter
+double k_west = 0.864264;//Shape parameter
+double sigma_west = 3.01907;// Scale Parameter
+
 
 
 
@@ -44,42 +52,15 @@ double ICDF_ExtremeValues(double p,double mu,double k,double sigma)
     }
 }
 
-//ERF Inverse Function
-float myErfInv2(float x){
-   float tt1, tt2, lnx, sgn;
-   sgn = (x < 0) ? -1.0f : 1.0f;
-
-   x = (1 - x)*(1 + x);        // x = 1 - x*x;
-   lnx = logf(x);
-
-   tt1 = 2/(M_PI*0.147) + 0.5f * lnx;
-   tt2 = 1/(0.147) * lnx;
-
-   return(sgn*sqrtf(-tt1 + sqrtf(tt1*tt1 - tt2)));
-}
-
-
-
-//double ICDF_normal_distribution(double beta, double gamma)
-double ICDF_normal_distribution(double p, double mu, double k, double sigma)
-{   
-    float aux = 2*p-1;
-    return sqrt(2)*myErfInv2(aux)+mu;
-
-}
-
 double ICDF_Birnbaum_Sanders(double p, double mu, double k, double sigma)
 {
     double z = 1.0*rand()/RAND_MAX;
-    double aux1 = sigma*0.25;
+    double aux1 = 0.25*sigma;
     double aux2 = k*z;
     double aux3 = pow(aux2,2) + 4;
     double aux4 = sqrt(aux3) + aux2;
-    return (0.25)*pow(aux4,2);
+    return (aux1)*pow(aux4,2);
 }
-
-
-
 
 
 //GENERADOR DE LA COLA
@@ -123,10 +104,11 @@ void queue_trend_analysis(int maximum_repetitions,
                         double (*distribution_selected)(double,double,double,double),
                         double mu,
                         double k,
-                        double sigma)
+                        double sigma,
+                        string region)
 {
     //Nombre del archivo
-    namef = "Results/Easth_Complete_trend_analysis.dat";
+    namef = "Results/_" + region + "_Complete_trend_analysis.dat";
     
     //Creamos el fichero para guardar los archivos 
     ofstream Data (namef);
@@ -146,6 +128,10 @@ void queue_trend_analysis(int maximum_repetitions,
     //Cerramos el archivo
     Data.close();
 }
+
+
+
+
 
 //Formador de la cola 4 links 
 float queue_formation(  float Q_0,
@@ -230,7 +216,8 @@ int main(){
     srand(time(NULL));
 
 //Generamos los archivos para hacer el trend analysis
-    queue_trend_analysis(maximum_repetitions,ICDF_Birnbaum_Sanders,mu_east,k_east,sigma_east);
+    string region = "West";
+    queue_trend_analysis(maximum_repetitions,ICDF_ExtremeValues,mu_west,k_west,sigma_west,region);
     //cout<<queue_formation(0,0,60,180,3600,0,time_max)<<endl;
 
   
