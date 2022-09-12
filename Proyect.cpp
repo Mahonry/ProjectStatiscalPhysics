@@ -7,7 +7,7 @@
 using namespace std;
 
 //Numero de veces a efectuar la simulacion
-int maximum_repetitions = 50000;
+int maximum_repetitions = 100000;
 
 //Declaramos la variable de nombre
 string namef;
@@ -38,7 +38,7 @@ double sigma_west = 3.019;// Scale Parameter
 
 
 
-//Definimos la funcion inversa de la distribucion generalizado de valores extremos acumulada
+//Distribucion Generalized Extreme Values
 double ICDF_ExtremeValues(double p,double mu,double k,double sigma)
 {
     if(k == 0){
@@ -52,6 +52,7 @@ double ICDF_ExtremeValues(double p,double mu,double k,double sigma)
     }
 }
 
+//Distribucion Birnbaum Sanders
 double ICDF_Birnbaum_Sanders(double p, double mu, double k, double sigma)
 {
     double z = 1.0*rand()/RAND_MAX;
@@ -143,7 +144,11 @@ float queue_formation(  double Q_0,
                         double S_flow,
                         double V_g, 
                         double time_max,
-                        double max_distribution
+                        double max_distribution,
+                        double (*distribution_selected)(double,double,double,double),
+                        double mu,
+                        double k, 
+                        double sigma
                         )
 {
     //Declaramos el valor final de la cola
@@ -154,9 +159,6 @@ float queue_formation(  double Q_0,
 
     //Declaramos el contador de tiempo
     float t = 0;
-
-    //Probamos con un cycle lenght de 60as
-    float  cycle_lenght = 60;
 
     //Creamos el archivo donde se van a guardar los datos 
     //Nombre del archivo
@@ -172,16 +174,16 @@ float queue_formation(  double Q_0,
 
 
 
-    while(t <= time_max)
+    while(t < time_max)
     {
 
 
         //Calculamos el arrivo en rojo
-        V_first = queue_generation(t_r,Data,ICDF_ExtremeValues, mu_north, k_north, sigma_north, i,max_distribution);
+        V_first = queue_generation(t_r,Data,distribution_selected, mu, k, sigma, i,max_distribution);
         t += t_r;
         
         //Calculamos el arribo en verde
-        V_g = queue_generation(t_g,Data,ICDF_ExtremeValues, mu_north, k_north, sigma_north, i,max_distribution);
+        V_g = queue_generation(t_g,Data,distribution_selected, mu, k, sigma, i,max_distribution);
         t += t_g;
         
         //Calculamos la cola final
@@ -200,12 +202,6 @@ float queue_formation(  double Q_0,
             
         i += 1;
 
-        //Probamos imprimir
-        cout<<"Arribo rojo "<<V_first<<endl;
-        cout<<"Arribo verde "<<V_g<<endl;
-        cout<<"Control "<<control<<endl;
-        cout<<"Tiempo "<<t<<endl;
-        cout<<"_________"<<endl;
 
     }
 
@@ -219,13 +215,25 @@ int main(){
     srand(time(NULL));
 
 //Generamos los archivos para hacer el trend analysis
-    string region = "South";
-    queue_trend_analysis(maximum_repetitions,ICDF_ExtremeValues,mu_south,k_south,sigma_south,region,1); //.99 para WEST .99999 North
-    //cout<<queue_formation(0,0,60,180,3600,0,time_max)<<endl;
+    //string region = "South_180";
+    //queue_trend_analysis(maximum_repetitions,ICDF_ExtremeValues,mu_south,k_south,sigma_south,region,1); //.99 para WEST .99999 North//ICDF_Birnbaum_Sanders EAST
+    
 
-  
+    ofstream Data ("Cola_final.dat");
+    Data<<"N"<<" "<<"S"<<" "<<"W"<<" "<<"E"<<endl;
+    for(int j = 0; j < maximum_repetitions; j++)
+    {
+    
+        
+        Data<<queue_formation(0,0,60,180,1800,0,time_max,1,ICDF_ExtremeValues,mu_north,k_north,sigma_north)<<" "
+            <<queue_formation(0,0,60,180,1800,0,time_max,1,ICDF_ExtremeValues,mu_south,k_south,sigma_south)<<" "
+            <<queue_formation(0,0,60,180,900,0,time_max,0.99,ICDF_ExtremeValues,mu_west,k_west,sigma_west)<<" "
+            <<queue_formation(0,0,60,180,900,0,time_max,1,ICDF_Birnbaum_Sanders,mu_east,k_east,sigma_east)<<endl;
+        
 
+    }
 
+    Data.close();
 
     return 0;
 }
