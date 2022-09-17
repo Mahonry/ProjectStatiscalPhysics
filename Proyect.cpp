@@ -7,7 +7,7 @@
 using namespace std;
 
 //Numero de veces a efectuar la simulacion
-int maximum_repetitions = 100000;
+int maximum_repetitions = 50000;
 
 //Declaramos la variable de nombre
 string namef;
@@ -65,7 +65,7 @@ double ICDF_Birnbaum_Sanders(double p, double mu, double k, double sigma)
 
 
 //GENERADOR DE LA COLA
-float queue_generation(double time_max, 
+double queue_generation(double time_max, 
                             ofstream& data, 
                             double (*distribution_selected)(double,double,double,double), 
                             double location_parameter, 
@@ -137,9 +137,9 @@ void queue_trend_analysis(int maximum_repetitions,
 
 
 //Formador de la cola 4 links 
-float queue_formation(  double Q_0,
+double queue_formation(  double Q_0,
                         double V_first,
-                        double t_g, //En este caso tomaremos time green (t_g) and time red (t_r) iguales
+                        double t_g, 
                         double t_r,
                         double S_flow,
                         double V_g, 
@@ -178,7 +178,7 @@ float queue_formation(  double Q_0,
     {
 
 
-        //Calculamos el arrivo en rojo
+        //Calculamos el arribo en rojo
         V_first = queue_generation(t_r,Data,distribution_selected, mu, k, sigma, i,max_distribution);
         t += t_r;
         
@@ -209,31 +209,52 @@ float queue_formation(  double Q_0,
 }
 
 
+void for_cola_four_links(int maximum_repetitions)
+{
+    ofstream Data ("Cola_final.dat");
+    Data<<"N"<<" "<<"S"<<" "<<"W"<<" "<<"E"<<" "<<"Tg"<<endl;
+    for(int cycle = 60; cycle <= 150; cycle += 10)
+    {
+        for(int j = 0; j < maximum_repetitions; j++)
+        {
+            if(j%10000 == 0)//Ciclo para checar que esta funcionando 
+            {
+                cout<<cycle<<" "<<j<<endl;
+            }
+
+            
+            Data<<queue_formation(0,0,cycle,cycle*3,1800,0,time_max,1,ICDF_ExtremeValues,mu_north,k_north,sigma_north)<<" "
+                <<queue_formation(0,0,cycle,cycle*3,1800,0,time_max,1,ICDF_ExtremeValues,mu_south,k_south,sigma_south)<<" "
+                <<queue_formation(0,0,cycle,cycle*3,900,0,time_max,0.999,ICDF_ExtremeValues,mu_west,k_west,sigma_west)<<" "
+                <<queue_formation(0,0,cycle,cycle*3,900,0,time_max,1,ICDF_Birnbaum_Sanders,mu_east,k_east,sigma_east)<<" "
+                <<cycle<<endl;
+            
+
+        }
+    }
+    Data.close();
+}
+
+
+double vehicle_delay()
+{
+
+}
+
+
 int main(){
 
-    //Definimos el generador de numeros gaussianos
+//Definimos el generador de numeros gaussianos
     srand(time(NULL));
 
 //Generamos los archivos para hacer el trend analysis
     //string region = "South_180";
     //queue_trend_analysis(maximum_repetitions,ICDF_ExtremeValues,mu_south,k_south,sigma_south,region,1); //.99 para WEST .99999 North//ICDF_Birnbaum_Sanders EAST
-    
 
-    ofstream Data ("Cola_final.dat");
-    Data<<"N"<<" "<<"S"<<" "<<"W"<<" "<<"E"<<endl;
-    for(int j = 0; j < maximum_repetitions; j++)
-    {
-    
-        
-        Data<<queue_formation(0,0,60,180,1800,0,time_max,1,ICDF_ExtremeValues,mu_north,k_north,sigma_north)<<" "
-            <<queue_formation(0,0,60,180,1800,0,time_max,1,ICDF_ExtremeValues,mu_south,k_south,sigma_south)<<" "
-            <<queue_formation(0,0,60,180,900,0,time_max,0.99,ICDF_ExtremeValues,mu_west,k_west,sigma_west)<<" "
-            <<queue_formation(0,0,60,180,900,0,time_max,1,ICDF_Birnbaum_Sanders,mu_east,k_east,sigma_east)<<endl;
-        
+//Generamos la cola final para los 4 links 
+    for_cola_four_links(maximum_repetitions);
 
-    }
 
-    Data.close();
 
     return 0;
 }
