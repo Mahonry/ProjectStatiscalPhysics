@@ -73,7 +73,7 @@ double ICDF_Birnbaum_Sanders(double p, double mu, double k, double sigma)
 
 
 //GENERADOR DE LA COLA
-double queue_generation(double time_max, 
+int queue_generation(double time_max, 
                             ofstream& data, 
                             double (*distribution_selected)(double,double,double,double), 
                             double location_parameter, 
@@ -85,7 +85,7 @@ double queue_generation(double time_max,
                             )
 {
     //Definimos el generador de numeros aleatorios para una distribuicon uniforme
-    default_random_engine generator(time(NULL));
+    default_random_engine generator(1.0*rand());
     uniform_real_distribution<double> distribution(0.0,max_distribution);
 
     //Seteamos los parametros iniciales
@@ -93,17 +93,22 @@ double queue_generation(double time_max,
     int N = 1; //contador de numero de vehiculos en la cola
     delta_times[0] = t;
 
+    double delta_t;
     //Definimos la simulacion
-    while(t < time_max)
+    while(t <= time_max)
     {
+
         double p = distribution(generator);
-        double delta_t = distribution_selected(p, 
-                                            location_parameter, 
-                                            shape_parameter, 
-                                            scale_parameter);
+        delta_t = distribution_selected(p, 
+                                        location_parameter, 
+                                        shape_parameter, 
+                                        scale_parameter);
+
+
         t += delta_t;
         N++;
         delta_times[N] = delta_t;
+
         //Guardamos los datos
         data<<delta_t<<" "<<t<<" "<<N<<" "<<iteration<<endl;
     }
@@ -118,15 +123,114 @@ double vehicle_delay(double time_max,
                             double shape_parameter, 
                             double scale_parameter,
                             int iteration,
-                            double max_distribution)
+                            double max_distribution,
+                            double t_g,
+                            double t_r,
+                            double S_flow)
 {
-    double delta_times[10000];
 
-    queue_generation(time_max,data,distribution_selected, location_parameter, shape_parameter, scale_parameter, iteration,max_distribution,delta_times);
+    //Declaramos el Delay en rojo
+    double D_r;
+    //Declaramos el Delay en verde
+    double D_g;
+
+    //Declaramos el residuo
+    double Q_0 = 0;
+
+    //Contador de tiempo
+    double t = 0;
+
+    //Declaramos Suturated flow rate at green
+    double S_g = (t_g*S_flow)/3600;
+
+    //Delclaramos el delay total
+    double delay_total = 0;
+
+    //Declaramos el total de vehiculos
+    double N_total = 0;
+
+    while (t<time_max)
+    {
+
+        //Reseteamos las variables 
+        D_g = 0;
+        D_r = 0;
 
 
+        double delta_times[10000] = {0};
+        //Calculamos el arribo en rojo
 
-    return 0;
+        int V_first = queue_generation(t_r,data,distribution_selected, location_parameter, shape_parameter, scale_parameter, iteration,max_distribution, delta_times);
+        t += t_r;
+        N_total += V_first;
+
+        //Declaramos la suma
+        double sum = 0;
+
+        //Declaramos la resta
+        double rest = 0;
+
+
+        //Calculamos el delay en rojo
+        for(int j = 0; j<= V_first; j++)
+        {   
+            for(int i = 0; i<=j; i++)
+            {
+                rest += delta_times[j] - delta_times[i];
+            }
+            sum += t_r - rest;
+            rest = 0;
+        }
+        //Calculamos el delay en rojo
+
+
+        D_r = Q_0*t_r + sum;
+
+        
+
+       //Calculamos el arribo en verde
+        int V_g = queue_generation(t_g,data,distribution_selected, location_parameter, shape_parameter, scale_parameter, iteration,max_distribution, delta_times);
+        t += t_g;
+        N_total += V_g;
+        
+        //Calculamos la cola final
+        float control = Q_0 + V_first + V_g - S_g;
+
+        if (control <= 0)
+        {
+            Q_0 = 0;
+        }
+        else
+        {
+            Q_0 = Q_0 + V_first + V_g - S_g;
+        }
+
+        //Calculamos el delay en verde
+        double aux = Q_0 + V_g;
+        double k = min(S_g,aux);
+        
+        if (k = S_g)
+        {
+            for (int i = 0; i<=k; i++)
+            {
+                D_g += i/(S_flow/3600);
+            }
+        }
+        else
+        {
+            for (int i = 0; i<=k; i++)
+            {
+                D_g += i/(S_flow/3600); 
+            }
+            D_g += (Q_0 + V_g - k)*t_g + D_g;
+        }
+
+        delay_total += D_g;
+        delay_total += D_r;
+    }
+    cout<<"Delay "<<delay_total<<" Vehicles "<<N_total<<endl;
+
+    return delay_total/N_total;
 }
 
 
@@ -273,6 +377,8 @@ int main(){
 //Definimos el generador de numeros gaussianos
     srand(time(NULL));
 
+    
+
 //Generamos los archivos para hacer el trend analysis
     //string region = "South_180";
     //queue_trend_analysis(maximum_repetitions,ICDF_ExtremeValues,mu_south,k_south,sigma_south,region,1); //.99 para WEST .99999 North//ICDF_Birnbaum_Sanders EAST
@@ -280,14 +386,21 @@ int main(){
 //Generamos la cola final para los 4 links 
     //for_cola_four_links(maximum_repetitions);
 
-        //Nombre del archivo
+    //Nombre del archivo
     namef = "Results/_Test_delay";
     
     //Creamos el fichero para guardar los archivos 
     ofstream Data (namef);
+
+    //queue_generation(60*3,Data, ICDF_ExtremeValues,mu_north,k_north,sigma_north,1,1,delta_times_null);
     
-   
-    vehicle_delay(time_max,Data,ICDF_ExtremeValues,mu_north,k_north,sigma_north,0,1);
+    //cout<<vehicle_delay(time_max,Data,ICDF_ExtremeValues,mu_north,k_north,sigma_north,0,1,60,60*3,1800)<<endl;
+
+   for(int cycle = 60; cycle <= 200; cycle += 10)
+   { 
+        cout<<vehicle_delay(time_max,Data,ICDF_ExtremeValues,mu_north,k_north,sigma_north,0,1,cycle,cycle*,3600)<<endl;
+        cout<<"______________"<<endl;
     
+    }
     return 0;
 }
