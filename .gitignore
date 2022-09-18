@@ -4,4 +4,6 @@
 *.out
 *.xlsx
 *.ods
-*..~lock.Resultados simulaciones.ods#
+*.~lock.Resultados simulaciones.ods#
+*.json
+*.exe

@@ -4,6 +4,7 @@
 #include<random>
 #include<cmath>
 #include <math.h> 
+#include <vector>
 using namespace std;
 
 //Numero de veces a efectuar la simulacion
@@ -37,6 +38,11 @@ double sigma_west = 3.019;// Scale Parameter
 
 
 
+//Definimos el vector nulo
+double delta_times_null[10000];
+
+
+
 
 //Distribucion Generalized Extreme Values
 double ICDF_ExtremeValues(double p,double mu,double k,double sigma)
@@ -64,6 +70,8 @@ double ICDF_Birnbaum_Sanders(double p, double mu, double k, double sigma)
 }
 
 
+
+
 //GENERADOR DE LA COLA
 double queue_generation(double time_max, 
                             ofstream& data, 
@@ -72,7 +80,8 @@ double queue_generation(double time_max,
                             double shape_parameter, 
                             double scale_parameter,
                             int iteration,
-                            double max_distribution
+                            double max_distribution,
+                            double (&delta_times)[10000]
                             )
 {
     //Definimos el generador de numeros aleatorios para una distribuicon uniforme
@@ -82,6 +91,7 @@ double queue_generation(double time_max,
     //Seteamos los parametros iniciales
     double t = 0; //contador de tiempo
     int N = 1; //contador de numero de vehiculos en la cola
+    delta_times[0] = t;
 
     //Definimos la simulacion
     while(t < time_max)
@@ -93,13 +103,32 @@ double queue_generation(double time_max,
                                             scale_parameter);
         t += delta_t;
         N++;
-
+        delta_times[N] = delta_t;
         //Guardamos los datos
         data<<delta_t<<" "<<t<<" "<<N<<" "<<iteration<<endl;
     }
 
     return N;
 }
+
+double vehicle_delay(double time_max, 
+                            ofstream& data, 
+                            double (*distribution_selected)(double,double,double,double), 
+                            double location_parameter, 
+                            double shape_parameter, 
+                            double scale_parameter,
+                            int iteration,
+                            double max_distribution)
+{
+    double delta_times[10000];
+
+    queue_generation(time_max,data,distribution_selected, location_parameter, shape_parameter, scale_parameter, iteration,max_distribution,delta_times);
+
+
+
+    return 0;
+}
+
 
 //Analisis de tendencia 
 void queue_trend_analysis(int maximum_repetitions,
@@ -123,7 +152,7 @@ void queue_trend_analysis(int maximum_repetitions,
     {
 
         //Generamos la simulacion
-        queue_generation(time_max,Data,distribution_selected, mu, k, sigma, i,max_distribution);
+        queue_generation(time_max,Data,distribution_selected, mu, k, sigma, i,max_distribution,delta_times_null);
 
 
     }
@@ -179,11 +208,11 @@ double queue_formation(  double Q_0,
 
 
         //Calculamos el arribo en rojo
-        V_first = queue_generation(t_r,Data,distribution_selected, mu, k, sigma, i,max_distribution);
+        V_first = queue_generation(t_r,Data,distribution_selected, mu, k, sigma, i,max_distribution, delta_times_null);
         t += t_r;
         
         //Calculamos el arribo en verde
-        V_g = queue_generation(t_g,Data,distribution_selected, mu, k, sigma, i,max_distribution);
+        V_g = queue_generation(t_g,Data,distribution_selected, mu, k, sigma, i,max_distribution, delta_times_null);
         t += t_g;
         
         //Calculamos la cola final
@@ -236,10 +265,7 @@ void for_cola_four_links(int maximum_repetitions)
 }
 
 
-double vehicle_delay()
-{
 
-}
 
 
 int main(){
@@ -252,9 +278,16 @@ int main(){
     //queue_trend_analysis(maximum_repetitions,ICDF_ExtremeValues,mu_south,k_south,sigma_south,region,1); //.99 para WEST .99999 North//ICDF_Birnbaum_Sanders EAST
 
 //Generamos la cola final para los 4 links 
-    for_cola_four_links(maximum_repetitions);
+    //for_cola_four_links(maximum_repetitions);
 
-
-
+        //Nombre del archivo
+    namef = "Results/_Test_delay";
+    
+    //Creamos el fichero para guardar los archivos 
+    ofstream Data (namef);
+    
+   
+    vehicle_delay(time_max,Data,ICDF_ExtremeValues,mu_north,k_north,sigma_north,0,1);
+    
     return 0;
 }
