@@ -36,13 +36,8 @@ double mu_west = 3.9742;//Location parameter
 double k_west = 0.8642;//Shape parameter
 double sigma_west = 3.019;// Scale Parameter
 
-
-
-//Definimos el vector nulo
+//Definimos el vector nulo para guardar los delta times
 double delta_times_null[10000];
-
-
-
 
 //Distribucion Generalized Extreme Values
 double ICDF_ExtremeValues(double p,double mu,double k,double sigma)
@@ -68,8 +63,6 @@ double ICDF_Birnbaum_Sanders(double p, double mu, double k, double sigma)
     double aux4 = sqrt(aux3) + aux2;
     return (aux1)*pow(aux4,2);
 }
-
-
 
 
 //GENERADOR DE LA COLA
@@ -115,6 +108,8 @@ int queue_generation(double time_max,
 
     return N;
 }
+
+//Generador de delay
 
 double vehicle_delay(double time_max, 
                             ofstream& data, 
@@ -266,10 +261,7 @@ void queue_trend_analysis(int maximum_repetitions,
 }
 
 
-
-
-
-//Formador de la cola 4 links 
+//Generador de la cola 4 links 
 double queue_formation(  double Q_0,
                         double V_first,
                         double t_g, 
@@ -341,10 +333,10 @@ double queue_formation(  double Q_0,
     return Q_total;
 }
 
-
+//Ciclo para generar las colas en los 4 links
 void for_cola_four_links(int maximum_repetitions)
 {
-    ofstream Data ("Cola_final.dat");
+    ofstream Data ("Results/Cola_final.dat");
     Data<<"N"<<" "<<"S"<<" "<<"W"<<" "<<"E"<<" "<<"Tg"<<endl;
     for(int cycle = 60; cycle <= 150; cycle += 10)
     {
@@ -368,6 +360,33 @@ void for_cola_four_links(int maximum_repetitions)
     Data.close();
 }
 
+//Ciclo para generar los delays en los 4 links
+void for_delay(int maximum_repetitions)
+{
+    ofstream Data ("Results/Delay.dat");
+    Data<<"N"<<" "<<"S"<<" "<<"W"<<" "<<"E"<<" "<<"Tg"<<endl;
+    for(int cycle = 60; cycle <= 200; cycle += 10)
+    {
+        for(int j = 0; j < maximum_repetitions; j++)
+        {
+            if(j%10000 == 0)//Ciclo para checar que esta funcionando 
+            {
+                cout<<cycle<<" "<<j<<endl;
+            }
+
+            
+            Data<<vehicle_delay(time_max,Data,ICDF_ExtremeValues,mu_north,k_north,sigma_north,0,1,cycle,cycle*3,3600)<<" "
+                <<vehicle_delay(time_max,Data,ICDF_ExtremeValues,mu_south,k_south,sigma_south,0,1,cycle,cycle*3,3600)<<" "
+                <<vehicle_delay(time_max,Data,ICDF_ExtremeValues,mu_west,k_west,sigma_west,0,1,cycle,cycle*3,3600)<<" "
+                <<vehicle_delay(time_max,Data,ICDF_Birnbaum_Sanders,mu_east,k_east,sigma_east,0,1,cycle,cycle*3,3600)<<" "
+                <<cycle<<endl;
+            
+
+        }
+    }
+    Data.close();
+
+}
 
 
 
@@ -377,30 +396,26 @@ int main(){
 //Definimos el generador de numeros gaussianos
     srand(time(NULL));
 
-    
-
 //Generamos los archivos para hacer el trend analysis
-    //string region = "South_180";
-    //queue_trend_analysis(maximum_repetitions,ICDF_ExtremeValues,mu_south,k_south,sigma_south,region,1); //.99 para WEST .99999 North//ICDF_Birnbaum_Sanders EAST
+    string region = "North";
+    queue_trend_analysis(maximum_repetitions,ICDF_ExtremeValues,mu_north,k_north,sigma_north,region,1); 
 
-//Generamos la cola final para los 4 links 
-    //for_cola_four_links(maximum_repetitions);
+    string region = "South";
+    queue_trend_analysis(maximum_repetitions,ICDF_ExtremeValues,mu_south,k_south,sigma_south,region,1); 
 
-    //Nombre del archivo
-    namef = "Results/_Test_delay";
+    string region = "West";
+    queue_trend_analysis(maximum_repetitions,ICDF_ExtremeValues,mu_west,k_west,sigma_west,region,1); 
+
+    string region = "East";
+    queue_trend_analysis(maximum_repetitions,ICDF_Birnbaum_Sanders,mu_east,k_east,sigma_east,region,1); 
+
+//Generamos el archivo de formacion de colas
+    for_cola_four_links(maximum_repetitions);
+
+
+//Generamos el archivo de Delays
+    for_delay(maximum_repetitions);
+
     
-    //Creamos el fichero para guardar los archivos 
-    ofstream Data (namef);
-
-    //queue_generation(60*3,Data, ICDF_ExtremeValues,mu_north,k_north,sigma_north,1,1,delta_times_null);
-    
-    //cout<<vehicle_delay(time_max,Data,ICDF_ExtremeValues,mu_north,k_north,sigma_north,0,1,60,60*3,1800)<<endl;
-
-   for(int cycle = 60; cycle <= 200; cycle += 10)
-   { 
-        cout<<vehicle_delay(time_max,Data,ICDF_ExtremeValues,mu_north,k_north,sigma_north,0,1,cycle,cycle*,3600)<<endl;
-        cout<<"______________"<<endl;
-    
-    }
     return 0;
 }
