@@ -375,10 +375,10 @@ void for_delay(int maximum_repetitions)
             }
 
             
-            Data<<vehicle_delay(time_max,Data,ICDF_ExtremeValues,mu_north,k_north,sigma_north,0,1,cycle,cycle*3,3600)<<" "
-                <<vehicle_delay(time_max,Data,ICDF_ExtremeValues,mu_south,k_south,sigma_south,0,1,cycle,cycle*3,3600)<<" "
-                <<vehicle_delay(time_max,Data,ICDF_ExtremeValues,mu_west,k_west,sigma_west,0,1,cycle,cycle*3,3600)<<" "
-                <<vehicle_delay(time_max,Data,ICDF_Birnbaum_Sanders,mu_east,k_east,sigma_east,0,1,cycle,cycle*3,3600)<<" "
+            Data<<vehicle_delay(time_max,Data,ICDF_ExtremeValues,mu_north,k_north,sigma_north,0,1,cycle,cycle*3,1800)<<" "
+                <<vehicle_delay(time_max,Data,ICDF_ExtremeValues,mu_south,k_south,sigma_south,0,1,cycle,cycle*3,1800)<<" "
+                <<vehicle_delay(time_max,Data,ICDF_ExtremeValues,mu_west,k_west,sigma_west,0,1,cycle,cycle*3,900)<<" "
+                <<vehicle_delay(time_max,Data,ICDF_Birnbaum_Sanders,mu_east,k_east,sigma_east,0,1,cycle,cycle*3,900)<<" "
                 <<cycle<<endl;
             
 
